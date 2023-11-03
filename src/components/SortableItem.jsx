@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import React, { useState } from "react";
 import { BsImage } from "react-icons/bs";
 
-export default function SortableItem({ image, handleCount }) {
+export default function SortableItem({ image, handleCount, dragingActive }) {
   const [select, setSelect] = useState(false);
 
   const {
@@ -20,27 +20,42 @@ export default function SortableItem({ image, handleCount }) {
       image,
     },
   });
+
   const style = { transition, transform: CSS.Transform.toString(transform) };
 
-  const handleCheck = (value) => {
-    setSelect(!select);
-    handleCount({ value, select });
+  const inlineStyles = {
+    transformOrigin: "0 0",
+    ...style,
   };
 
   if (isDragging) {
-    return <div>Hellow</div>;
+    return (
+      <div
+        ref={setNodeRef}
+        style={inlineStyles}
+        className=" border-2 border-green-400 rounded-md h-full w-full bg-neutral-100"
+      />
+    );
   }
 
+  const handleCheck = (value) => {
+    setSelect(!select);
+    console.log(select);
+    console.log(value);
+    console.log(select);
+    handleCount({ value, select });
+  };
+
   return (
-    <div ref={setNodeRef} style={style} className="relative h-full group">
+    <div ref={setNodeRef} style={style} className="group h-full relative">
       <div
         {...attributes}
         {...listeners}
         // check border style
         className={
           image?.img === null
-            ? "border-2 border-dashed bg-neutral-100 border-neutral-300 rounded-md overflow-hidden relative  h-[100%] flex flex-col items-center justify-center"
-            : "border-2 border-neutral-300 rounded-md overflow-hidden relative group"
+            ? "border-2 border-dashed bg-neutral-100  border-neutral-300 rounded-md overflow-hidden relative  h-[100%] flex flex-col items-center justify-center"
+            : "border-2 border-neutral-300 bg-white rounded-md overflow-hidden relative group"
         }
       >
         <div>
@@ -55,21 +70,27 @@ export default function SortableItem({ image, handleCount }) {
                   <p> Add Images</p>
                 </div>
               </div>
-              <div className=" bg-transparent group-hover:bg-black/30 ease-in duration-300  h-full w-full absolute top-0 left-0" />
+              <div
+                className={`bg-transparent ${
+                  !dragingActive ? "group-hover:bg-black/30" : null
+                } ease-in duration-300  h-full w-full absolute top-0 left-0`}
+              />
             </div>
           ) : (
             <div>
               <img src={image?.img} alt="image" className="img-container" />
-              <div
-                className={`bg-transparent ${
-                  !select ? "group-hover:bg-black/40" : " bg-white/50"
-                } ease-in duration-300  h-full w-full absolute top-0 left-0`}
-              />
+              {!dragingActive ? (
+                <div
+                  className={`bg-transparent ${
+                    !select ? "group-hover:bg-black/40" : " bg-white/50"
+                  } ease-in duration-300  h-full w-full absolute top-0 left-0`}
+                />
+              ) : null}
             </div>
           )}
         </div>
       </div>
-      {image?.img !== null ? (
+      {image?.img !== null && !dragingActive ? (
         <div
           className={
             select
@@ -80,7 +101,8 @@ export default function SortableItem({ image, handleCount }) {
           <input
             type="checkbox"
             name="check"
-            checked={image?.selected}
+            checked={select}
+            value={select}
             onChange={() => handleCheck(image?.id)}
           />
         </div>

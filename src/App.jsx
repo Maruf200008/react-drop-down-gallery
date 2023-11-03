@@ -1,12 +1,10 @@
 import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
-  verticalListSortingStrategy,
+  arrayMove
 } from "@dnd-kit/sortable";
 
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import {
   img1,
   img10,
@@ -26,7 +24,8 @@ function App() {
   const [count, setCount] = useState(0);
   const [selectId, setSelectId] = useState({});
   const [removeId, setRemoveId] = useState(new Set());
-  const [activeColumn, setActiveColumn] = useState(null);
+  const [activeImage, setActiveImage] = useState(null);
+  const [dragingActive, setDragingActive] = useState(false);
   const [images, setImages] = useState([
     {
       id: 1,
@@ -77,6 +76,7 @@ function App() {
       img: null,
     },
   ]);
+  
 
   // handle count & check
   const handleCount = ({ value, select }) => {
@@ -101,15 +101,28 @@ function App() {
     }
   };
 
+ // handle Delete
   const handleDelete = () => {
     const newData = images.filter((img) => !removeId.has(img.id));
-    console.log(newData);
     setImages(newData);
     setCount(0);
   };
 
-  // handle DND
+  
+//  DND Start
+  const onDragStart = (event) => {
+    setDragingActive(true)
+    if (event.active.data.current.type === "Images") {
+      setActiveImage(event.active.data.current.image);
+      return;
+    }
+  };
+
+
+//  DND End
   const handleDragEnd = (event) => {
+    
+    setDragingActive(false)
     const { active, over } = event;
     if (active.id === over.id) {
       return;
@@ -117,16 +130,10 @@ function App() {
     setImages((images) => {
       const oldIndex = images.findIndex((image) => image.id === active.id);
       const newIndex = images.findIndex((image) => image.id === over.id);
+      console.log(oldIndex)
+      console.log(newIndex)
       return arrayMove(images, oldIndex, newIndex);
     });
-  };
-
-  const onDragStart = (event) => {
-    console.log("DRAG START", event);
-    if (event.active.data.current.type === "Images") {
-      setActiveColumn(event.active.data.current.image);
-      return;
-    }
   };
 
   return (
@@ -146,14 +153,14 @@ function App() {
               <h1 className=" font-semibold text-xl">Gallary</h1>
             )}
           </div>
-          <div>
+          {count > 0  ? <div>
             <button
               onClick={handleDelete}
               className=" bg-red-600 hover:bg-red-400 ease-in duration-300 px-7 py-3 rounded-md text-white font-semibold  cursor-pointer"
             >
-              Delete Files
-            </button>
-          </div>
+              Delete {count === 1 ? "File" : "Files"}
+            </button> </div> : null}
+          
         </div>
 
         <DndContext
@@ -163,9 +170,8 @@ function App() {
         >
           <SortableContext
             items={images}
-            strategy={verticalListSortingStrategy}
           >
-            <div className=" grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-7">
+            <div className=" grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-7 overflow-hidden">
               {images.map((image, index) => (
                 <div
                   key={image?.id}
@@ -173,17 +179,14 @@ function App() {
                     index === 0 ? "col-span-2 md:row-span-2" : " col-span-1"
                   }
                 >
-                  <SortableItem image={image} handleCount={handleCount} />
+                  <SortableItem image={image} handleCount={handleCount} dragingActive={dragingActive} />
                 </div>
               ))}
             </div>
           </SortableContext>
-          {createPortal(
-            <DragOverlay>
-              {activeColumn && <SortableItem image={activeColumn} />}
-            </DragOverlay>,
-            document.body
-          )}
+          <DragOverlay adjustScale={true}>
+              {activeImage && <SortableItem image={activeImage}  dragingActive={dragingActive} />}
+            </DragOverlay>
         </DndContext>
       </div>
     </>
