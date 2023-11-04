@@ -3,7 +3,12 @@ import { CSS } from "@dnd-kit/utilities";
 import React, { useState } from "react";
 import { BsImage } from "react-icons/bs";
 
-export default function SortableItem({ image, handleCount, dragingActive }) {
+export default function SortableItem({
+  image,
+  handleCount,
+  dragingActive,
+  index,
+}) {
   const [select, setSelect] = useState(false);
 
   const {
@@ -23,8 +28,11 @@ export default function SortableItem({ image, handleCount, dragingActive }) {
 
   const style = { transition, transform: CSS.Transform.toString(transform) };
 
+  // inlineStyles
   const inlineStyles = {
     transformOrigin: "0 0",
+    gridRowStart: index === 0 ? "span 2" : null,
+    gridColumnStart: index === 0 ? "span 2" : null,
     ...style,
   };
 
@@ -33,21 +41,22 @@ export default function SortableItem({ image, handleCount, dragingActive }) {
       <div
         ref={setNodeRef}
         style={inlineStyles}
-        className=" border-2 border-green-400 rounded-md h-full w-full bg-neutral-100"
+        className=" border-2 border-green-400 rounded-md h-full w-full bg-neutral-100 gap-5"
       />
     );
   }
 
   const handleCheck = (value) => {
     setSelect(!select);
-    console.log(select);
-    console.log(value);
-    console.log(select);
     handleCount({ value, select });
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="group h-full relative">
+    <div
+      ref={setNodeRef}
+      style={inlineStyles}
+      className="group h-full relative"
+    >
       <div
         {...attributes}
         {...listeners}

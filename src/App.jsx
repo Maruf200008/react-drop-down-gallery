@@ -1,7 +1,8 @@
 import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove
+  arrayMove,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 
 import { useState } from "react";
@@ -76,53 +77,49 @@ function App() {
       img: null,
     },
   ]);
-  
 
   // handle count & check
-  const handleCount = ({ value, select }) => {
-    if (!select && value !== selectId) {
+  const handleCount = ({ value: imgId, select }) => {
+    if (!select && imgId !== selectId) {
       setCount((prv) => prv + 1);
-      setSelectId({ check: true, id: value });
+      setSelectId({ check: true, id: imgId });
       // set id
       const updatedSet = new Set(removeId);
-      updatedSet.add(value);
+      updatedSet.add(imgId);
       setRemoveId(updatedSet);
     } else if (
-      (select && count >= 0 && value === selectId) ||
-      value !== selectId
+      (select && count >= 0 && imgId === selectId) ||
+      imgId !== selectId
     ) {
       setCount((prv) => prv - 1);
-      setSelectId({ check: false, id: value });
-      if (removeId.has(value)) {
+      setSelectId({ check: false, id: imgId });
+      if (removeId.has(imgId)) {
         const updatedSet = new Set(removeId);
-        updatedSet.delete(value);
+        updatedSet.delete(imgId);
         setRemoveId(updatedSet);
       }
     }
   };
 
- // handle Delete
+  // handle Delete
   const handleDelete = () => {
     const newData = images.filter((img) => !removeId.has(img.id));
     setImages(newData);
     setCount(0);
   };
 
-  
-//  DND Start
+  //  DND Start
   const onDragStart = (event) => {
-    setDragingActive(true)
+    setDragingActive(true);
     if (event.active.data.current.type === "Images") {
       setActiveImage(event.active.data.current.image);
       return;
     }
   };
 
-
-//  DND End
+  //  DND End
   const handleDragEnd = (event) => {
-    
-    setDragingActive(false)
+    setDragingActive(false);
     const { active, over } = event;
     if (active.id === over.id) {
       return;
@@ -130,8 +127,6 @@ function App() {
     setImages((images) => {
       const oldIndex = images.findIndex((image) => image.id === active.id);
       const newIndex = images.findIndex((image) => image.id === over.id);
-      console.log(oldIndex)
-      console.log(newIndex)
       return arrayMove(images, oldIndex, newIndex);
     });
   };
@@ -153,14 +148,16 @@ function App() {
               <h1 className=" font-semibold text-xl">Gallary</h1>
             )}
           </div>
-          {count > 0  ? <div>
-            <button
-              onClick={handleDelete}
-              className=" bg-red-600 hover:bg-red-400 ease-in duration-300 px-7 py-3 rounded-md text-white font-semibold  cursor-pointer"
-            >
-              Delete {count === 1 ? "File" : "Files"}
-            </button> </div> : null}
-          
+          {count > 0 ? (
+            <div>
+              <button
+                onClick={handleDelete}
+                className=" bg-red-600 hover:bg-red-400 ease-in duration-300 px-7 py-3 rounded-md text-white font-semibold  cursor-pointer"
+              >
+                Delete {count === 1 ? "File" : "Files"}
+              </button>{" "}
+            </div>
+          ) : null}
         </div>
 
         <DndContext
@@ -168,25 +165,24 @@ function App() {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={images}
-          >
+          <SortableContext items={images} strategy={rectSortingStrategy}>
             <div className=" grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 sm:gap-7 overflow-hidden">
               {images.map((image, index) => (
-                <div
+                <SortableItem
                   key={image?.id}
-                  className={
-                    index === 0 ? "col-span-2 md:row-span-2" : " col-span-1"
-                  }
-                >
-                  <SortableItem image={image} handleCount={handleCount} dragingActive={dragingActive} />
-                </div>
+                  image={image}
+                  handleCount={handleCount}
+                  dragingActive={dragingActive}
+                  index={index}
+                />
               ))}
             </div>
           </SortableContext>
           <DragOverlay adjustScale={true}>
-              {activeImage && <SortableItem image={activeImage}  dragingActive={dragingActive} />}
-            </DragOverlay>
+            {activeImage && (
+              <SortableItem image={activeImage} dragingActive={dragingActive} />
+            )}
+          </DragOverlay>
         </DndContext>
       </div>
     </>
